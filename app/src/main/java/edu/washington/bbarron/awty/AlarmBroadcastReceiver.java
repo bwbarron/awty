@@ -11,7 +11,8 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String message = intent.getStringExtra("message");
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+        String phone = intent.getStringExtra("phone");
+        Toast.makeText(context, phone + ": " + message, Toast.LENGTH_SHORT).show();
     }
 
 }

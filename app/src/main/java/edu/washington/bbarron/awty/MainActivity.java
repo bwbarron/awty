@@ -30,17 +30,23 @@ public class MainActivity extends ActionBarActivity {
     private boolean isMessageValid;
     private boolean isPhoneValid;
     private boolean isTimeValid;
-    private BroadcastReceiver alarmReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        isActive = false;
-        isMessageValid = false;
-        isPhoneValid = false;
-        isTimeValid = false;
+        if (savedInstanceState != null) {
+            isActive = savedInstanceState.getBoolean("isActive");
+            isMessageValid = savedInstanceState.getBoolean("message");
+            isPhoneValid = savedInstanceState.getBoolean("phone");
+            isTimeValid = savedInstanceState.getBoolean("time");
+        } else {
+            isActive = false;
+            isMessageValid = false;
+            isPhoneValid = false;
+            isTimeValid = false;
+        }
 
         message = (EditText) findViewById(R.id.messageInput);
         message.addTextChangedListener(new TextWatcher() {
@@ -103,15 +109,13 @@ public class MainActivity extends ActionBarActivity {
                     String phoneNum = phone.getText().toString();
                     long interval = Integer.parseInt(time.getText().toString()) * 60 * 1000; // milliseconds
 
-                    //startAlarm.putExtra("message", phoneNum + ": " + messageText);
-                    startAlarm.putExtra("message", phoneNum + ": Are we there yet?");
-                    pendingIntent = PendingIntent.getBroadcast(MainActivity.this,
-                            0, startAlarm, 0);
+                    startAlarm.putExtra("message", messageText);
+                    startAlarm.putExtra("phone", phoneNum);
+                    pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, startAlarm, 0);
+
                     alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-                    //alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),
-                            //interval, pendingIntent);
                     alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),
-                            5000, pendingIntent);
+                            interval, pendingIntent);
 
                 } else { // stop alarm
                     if (pendingIntent != null) {
@@ -125,6 +129,16 @@ public class MainActivity extends ActionBarActivity {
         checkInputValidity();
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putBoolean("isActive", isActive);
+        savedInstanceState.putBoolean("message", isMessageValid);
+        savedInstanceState.putBoolean("phone", isPhoneValid);
+        savedInstanceState.putBoolean("time", isTimeValid);
+
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
     public void checkInputValidity() {
         if (isMessageValid && isPhoneValid && isTimeValid) {
             button.setEnabled(true);
@@ -135,6 +149,7 @@ public class MainActivity extends ActionBarActivity {
 
     public void setButtonText() {
         if (isActive) {
+            button.setEnabled(true);
             button.setText("Stop");
         } else {
             button.setText("Start");
