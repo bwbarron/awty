@@ -2,10 +2,7 @@ package edu.washington.bbarron.awty;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
@@ -17,15 +14,14 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 
 
 public class MainActivity extends ActionBarActivity {
 
     private EditText phone;
-    private Button button;
-    private boolean isActive;
+    private Button button; // start/stop button
+    private boolean isActive; // is messaging active
     private PendingIntent pendingIntent;
     private AlarmManager alarmManager;
     private boolean isMessageValid;
@@ -103,6 +99,8 @@ public class MainActivity extends ActionBarActivity {
                 if (!timeText.equals("")) {
                     freq = Integer.parseInt(timeText);
                     isTimeValid = (freq > 0);
+                } else {
+                    isTimeValid = false;
                 }
                 checkInputValidity();
             }
@@ -114,6 +112,7 @@ public class MainActivity extends ActionBarActivity {
             public void onClick(View v) {
                 isActive = !isActive;
                 setButtonText();
+                checkInputValidity();
 
                 if (isActive) { // set off alarm
                     Log.i("MainActivity", "messaging active");
@@ -135,6 +134,7 @@ public class MainActivity extends ActionBarActivity {
                     if (pendingIntent != null) {
                         alarmManager.cancel(pendingIntent);
                     }
+
                 }
             }
         });
@@ -148,7 +148,7 @@ public class MainActivity extends ActionBarActivity {
     public void checkInputValidity() {
         if (isMessageValid && isPhoneValid && isTimeValid) {
             button.setEnabled(true);
-        } else {
+        } else if (!isActive) {
             button.setEnabled(false);
         }
     }
@@ -182,26 +182,26 @@ public class MainActivity extends ActionBarActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == CONTACTS_REQUEST_CODE && resultCode == RESULT_OK) {
-            Uri contact = data.getData();
+            Uri contacts = data.getData();
             String contactID = null;
             String contactNumber = null;
 
             // get contactID
-            Cursor cursorID = getContentResolver().query(contact,
-                    new String[]{ContactsContract.Contacts._ID},
-                    null, null, null);
+            String[] contactIDs = new String[]{ContactsContract.Contacts._ID};
+            Cursor cursorID = getContentResolver().query(contacts, contactIDs, null, null, null);
             if (cursorID.moveToFirst()) {
                 contactID = cursorID.getString(cursorID.getColumnIndex(ContactsContract.Contacts._ID));
             }
             cursorID.close();
 
             // get contact phone number
+            String[] numbers = new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER};
             Cursor cursorPhone = getContentResolver().query(
                     ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                    new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER},
-                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ? AND " +
-                            ContactsContract.CommonDataKinds.Phone.TYPE + " = " +
-                            ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE,
+                    numbers,
+                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ? AND "
+                            + ContactsContract.CommonDataKinds.Phone.TYPE + " = "
+                            + ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE,
                     new String[]{contactID},
                     null);
             if (cursorPhone.moveToFirst()) {
