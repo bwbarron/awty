@@ -19,7 +19,8 @@
         android:inputType="text"
         android:hint=""
         android:layout_below="@id/message"
-        android:layout_marginBottom="20dp" />
+        android:layout_marginBottom="20dp"
+        android:selectAllOnFocus="true" />
 
     <TextView
         android:id="@+id/phone"
@@ -33,9 +34,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="phone"
-        android:hint="e.g. (123) 456-7890"
+        android:hint="e.g. 123-456-7890"
         android:layout_below="@id/phone"
-        android:layout_marginBottom="20dp" />
+        android:layout_marginBottom="20dp"
+        android:selectAllOnFocus="true" />
 
     <TextView
         android:id="@+id/time"
@@ -51,7 +53,8 @@
         android:inputType="number"
         android:hint=""
         android:layout_below="@id/time"
-        android:layout_marginBottom="20dp" />
+        android:layout_marginBottom="20dp"
+        android:selectAllOnFocus="true" />
     
     <Button
         android:id="@+id/button"

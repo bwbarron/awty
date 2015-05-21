@@ -10,6 +10,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,12 +18,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import org.w3c.dom.Text;
+
 
 public class MainActivity extends ActionBarActivity {
 
-    private EditText message;
-    private EditText phone;
-    private EditText time;
     private Button button;
     private boolean isActive;
     private PendingIntent pendingIntent;
@@ -30,25 +30,21 @@ public class MainActivity extends ActionBarActivity {
     private boolean isMessageValid;
     private boolean isPhoneValid;
     private boolean isTimeValid;
+    private String messageText;
+    private String phoneText;
+    private int freq;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (savedInstanceState != null) {
-            isActive = savedInstanceState.getBoolean("isActive");
-            isMessageValid = savedInstanceState.getBoolean("message");
-            isPhoneValid = savedInstanceState.getBoolean("phone");
-            isTimeValid = savedInstanceState.getBoolean("time");
-        } else {
-            isActive = false;
-            isMessageValid = false;
-            isPhoneValid = false;
-            isTimeValid = false;
-        }
+        isActive = false;
+        isMessageValid = false;
+        isPhoneValid = false;
+        isTimeValid = false;
 
-        message = (EditText) findViewById(R.id.messageInput);
+        EditText message = (EditText) findViewById(R.id.messageInput);
         message.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -58,12 +54,13 @@ public class MainActivity extends ActionBarActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                isMessageValid = !message.getText().toString().equals("");
+                messageText = s.toString();
+                isMessageValid = !messageText.equals("");
                 checkInputValidity();
             }
         });
 
-        phone = (EditText) findViewById(R.id.phoneInput);
+        EditText phone = (EditText) findViewById(R.id.phoneInput);
         phone.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -73,12 +70,13 @@ public class MainActivity extends ActionBarActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                isPhoneValid = !phone.getText().toString().equals("");
+                phoneText = s.toString();
+                isPhoneValid = !phoneText.equals("");
                 checkInputValidity();
             }
         });
 
-        time = (EditText) findViewById(R.id.timeInput);
+        EditText time = (EditText) findViewById(R.id.timeInput);
         time.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -88,8 +86,11 @@ public class MainActivity extends ActionBarActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                int freq = Integer.parseInt(time.getText().toString());
-                isTimeValid = (freq > 0);
+                String timeText = s.toString();
+                if (!timeText.equals("")) {
+                    freq = Integer.parseInt(timeText);
+                    isTimeValid = (freq > 0);
+                }
                 checkInputValidity();
             }
         });
@@ -102,22 +103,22 @@ public class MainActivity extends ActionBarActivity {
                 setButtonText();
 
                 if (isActive) { // set off alarm
+                    Log.i("MainActivity", "messaging active");
 
                     Intent startAlarm = new Intent(MainActivity.this, AlarmBroadcastReceiver.class);
 
-                    String messageText = message.getText().toString();
-                    String phoneNum = phone.getText().toString();
-                    long interval = Integer.parseInt(time.getText().toString()) * 60 * 1000; // milliseconds
-
                     startAlarm.putExtra("message", messageText);
-                    startAlarm.putExtra("phone", phoneNum);
-                    pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, startAlarm, 0);
+                    startAlarm.putExtra("phone", phoneText);
+                    long interval = freq * 60 * 1000; // milliseconds
 
+                    pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, startAlarm,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
                     alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
                     alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),
                             interval, pendingIntent);
 
                 } else { // stop alarm
+                    Log.i("MainActivity", "stop button: turning off messaging");
                     if (pendingIntent != null) {
                         alarmManager.cancel(pendingIntent);
                     }
@@ -125,18 +126,9 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
+        // set button text and check validity of inputs
         setButtonText();
         checkInputValidity();
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        savedInstanceState.putBoolean("isActive", isActive);
-        savedInstanceState.putBoolean("message", isMessageValid);
-        savedInstanceState.putBoolean("phone", isPhoneValid);
-        savedInstanceState.putBoolean("time", isTimeValid);
-
-        super.onSaveInstanceState(savedInstanceState);
     }
 
     public void checkInputValidity() {
@@ -154,5 +146,17 @@ public class MainActivity extends ActionBarActivity {
         } else {
             button.setText("Start");
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.i("MainActivity", "onDestroy() event firing");
+
+        // stop messaging if app is destroyed
+        if (pendingIntent != null) {
+            Log.i("MainActivity", "onDestroy: turning off messaging");
+            alarmManager.cancel(pendingIntent);
+        }
+        super.onDestroy();
     }
 }
