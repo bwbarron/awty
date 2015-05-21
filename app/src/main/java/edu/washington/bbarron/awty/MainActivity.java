@@ -144,6 +144,7 @@ public class MainActivity extends ActionBarActivity {
         checkInputValidity();
     }
 
+    // checks validity of text fields and sets submit button to be enabled or disabled
     public void checkInputValidity() {
         if (isMessageValid && isPhoneValid && isTimeValid) {
             button.setEnabled(true);
@@ -152,6 +153,7 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    // sets the button text depending on if messaging is active or not
     public void setButtonText() {
         if (isActive) {
             button.setEnabled(true);
@@ -173,6 +175,8 @@ public class MainActivity extends ActionBarActivity {
         super.onDestroy();
     }
 
+    // after user selects a contact, this method sets the phone number text field to contain that
+    // contact's number
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -195,21 +199,18 @@ public class MainActivity extends ActionBarActivity {
             Cursor cursorPhone = getContentResolver().query(
                     ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                     new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER},
-
                     ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ? AND " +
                             ContactsContract.CommonDataKinds.Phone.TYPE + " = " +
                             ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE,
-
                     new String[]{contactID},
                     null);
             if (cursorPhone.moveToFirst()) {
                 contactNumber = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
             }
+            cursorPhone.close();
 
             // set phone number text field
             phone.setText(contactNumber);
-
-            cursorPhone.close();
         }
     }
 }
