@@ -4,6 +4,7 @@ package edu.washington.bbarron.awty;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.telephony.SmsManager;
 import android.widget.Toast;
 
 public class AlarmBroadcastReceiver extends BroadcastReceiver {
@@ -12,7 +13,8 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String message = intent.getStringExtra("message");
         String phone = intent.getStringExtra("phone");
-        Toast.makeText(context, phone + ": " + message, Toast.LENGTH_SHORT).show();
+
+        SmsManager.getDefault().sendTextMessage(phone, null, message, null, null);
     }
 
 }
