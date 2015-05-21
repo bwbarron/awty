@@ -6,23 +6,24 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
+import android.net.Uri;
+import android.provider.ContactsContract;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
 
 
 public class MainActivity extends ActionBarActivity {
 
+    private EditText phone;
     private Button button;
     private boolean isActive;
     private PendingIntent pendingIntent;
@@ -33,6 +34,7 @@ public class MainActivity extends ActionBarActivity {
     private String messageText;
     private String phoneText;
     private int freq;
+    private static int CONTACTS_REQUEST_CODE = 42;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +62,7 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
-        EditText phone = (EditText) findViewById(R.id.phoneInput);
+        phone = (EditText) findViewById(R.id.phoneInput);
         phone.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -73,6 +75,17 @@ public class MainActivity extends ActionBarActivity {
                 phoneText = s.toString();
                 isPhoneValid = !phoneText.equals("");
                 checkInputValidity();
+            }
+        });
+
+        // sets listener for button which opens contacts for user to select from
+        Button getContacts = (Button) findViewById(R.id.contacts);
+        getContacts.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(
+                        new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI),
+                        CONTACTS_REQUEST_CODE);
             }
         });
 
@@ -158,5 +171,45 @@ public class MainActivity extends ActionBarActivity {
             alarmManager.cancel(pendingIntent);
         }
         super.onDestroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == CONTACTS_REQUEST_CODE && resultCode == RESULT_OK) {
+            Uri contact = data.getData();
+            String contactID = null;
+            String contactNumber = null;
+
+            // get contactID
+            Cursor cursorID = getContentResolver().query(contact,
+                    new String[]{ContactsContract.Contacts._ID},
+                    null, null, null);
+            if (cursorID.moveToFirst()) {
+                contactID = cursorID.getString(cursorID.getColumnIndex(ContactsContract.Contacts._ID));
+            }
+            cursorID.close();
+
+            // get contact phone number
+            Cursor cursorPhone = getContentResolver().query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER},
+
+                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ? AND " +
+                            ContactsContract.CommonDataKinds.Phone.TYPE + " = " +
+                            ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE,
+
+                    new String[]{contactID},
+                    null);
+            if (cursorPhone.moveToFirst()) {
+                contactNumber = cursorPhone.getString(cursorPhone.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+            }
+
+            // set phone number text field
+            phone.setText(contactNumber);
+
+            cursorPhone.close();
+        }
     }
 }

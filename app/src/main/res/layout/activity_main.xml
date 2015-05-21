@@ -36,15 +36,22 @@
         android:inputType="phone"
         android:hint="e.g. 123-456-7890"
         android:layout_below="@id/phone"
-        android:layout_marginBottom="20dp"
         android:selectAllOnFocus="true" />
+
+    <Button
+        android:id="@+id/contacts"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/phoneInput"
+        android:text="Select from contacts"
+        android:layout_marginBottom="20dp" />
 
     <TextView
         android:id="@+id/time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Minutes between messages:"
-        android:layout_below="@id/phoneInput" />
+        android:layout_below="@id/contacts" />
 
     <EditText
         android:id="@+id/timeInput"
